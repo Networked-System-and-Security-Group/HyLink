@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="alltoall" nranks="2" topology="1numa_2npu_per_numa" nnodes="1">
+  <description>
+    2-NPU AllToAll: 1 NUMA node, 2 NPUs.
+    Each rank sends chunk[j] to rank j, receives from rank j into chunk[j].
+  </description>
+
+  <rank id="0">
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="0" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2D" src_chunk="1" dst_chunk="1"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+  </rank>
+</ir_program>

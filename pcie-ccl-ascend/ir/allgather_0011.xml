@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather" nranks="4" topology="2numa_2npu_per_numa" nnodes="1">
+  <description>
+    4-NPU AllGather: 2 NUMA nodes, 2 NPUs per NUMA.
+    Optimization: copy remote NUMA chunks to local NUMA first, then all H2D reads
+    are local. This avoids each local rank independently reading from remote NUMA.
+      Rank 0: copies N1:hc2,hc3 to N0:hc4,hc5 (2 cross reads)
+      Rank 2: copies N0:hc0,hc1 to N1:hc4,hc5 (2 cross reads)
+    Cross-NUMA: 4 chunks.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <instruction op="H2H" src_chunk="2" dst_chunk="4" src_numa="1" dst_numa="0"/>
+    <instruction op="H2H" src_chunk="3" dst_chunk="5" src_numa="1" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="2"/>
+    <instruction op="H2H" src_chunk="0" dst_chunk="4" src_numa="0" dst_numa="1"/>
+    <instruction op="H2H" src_chunk="1" dst_chunk="5" src_numa="0" dst_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="0" src_numa="1"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="1" src_numa="1"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="3" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="3"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="0" src_numa="1"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="1" src_numa="1"/>
+  </rank>
+</ir_program>

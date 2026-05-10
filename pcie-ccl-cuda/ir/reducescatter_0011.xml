@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="reducescatter" nranks="4" topology="2numa_2gpu_per_numa" nnodes="1">
+  <description>
+    4-GPU ReduceScatter for 2 NUMA nodes without peer D2D.
+    Step 1: ranks 0/1 and 2/3 relay-exchange within their NUMA domains and
+    build two device-side partial sums per rank.  Step 2: ranks 0/2 and 1/3
+    exchange one partial each across NUMA and finish the target output with
+    D2DReduce (dst += src).  No H2HReduce is used.
+  </description>
+
+  <rank id="0">
+    <!-- Step 1, pair 0/1: rank0 aggregates chunks 0 and 2; rank1 aggregates chunks 1 and 3. -->
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="0"/>
+
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="4" src_numa="0" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="internal" dst_chunk="0"/>
+
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="H2D" src_chunk="6" src_numa="0" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="internal" dst_chunk="2"/>
+
+    <!-- Step 2, pair 0/2: send chunk2 partial to rank2 and receive chunk0 partial from rank2. -->
+    <instruction op="D2H" src_buf="internal" src_chunk="2" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="8" src_numa="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="1">
+    <!-- Step 1, pair 0/1: rank1 sends chunks 0/2 to rank0 and aggregates chunks 1/3. -->
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="6" dst_numa="0"/>
+
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="1" src_numa="0" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="internal" dst_chunk="1"/>
+
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="H2D" src_chunk="3" src_numa="0" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="internal" dst_chunk="3"/>
+
+    <!-- Step 2, pair 1/3: send chunk3 partial to rank3 and receive chunk1 partial from rank3. -->
+    <instruction op="D2H" src_buf="internal" src_chunk="3" dst_chunk="7" dst_numa="1"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="13" src_numa="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="2">
+    <!-- Step 1, pair 2/3: rank2 aggregates chunks 0 and 2; rank3 aggregates chunks 1 and 3. -->
+    <instruction op="D2H" src_chunk="1" dst_chunk="9" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="11" dst_numa="1"/>
+
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="12" src_numa="1" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="internal" dst_chunk="0"/>
+
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="H2D" src_chunk="14" src_numa="1" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="internal" dst_chunk="2"/>
+
+    <!-- Step 2, pair 0/2: send chunk0 partial to rank0 and receive chunk2 partial from rank0. -->
+    <instruction op="D2H" src_buf="internal" src_chunk="0" dst_chunk="8" dst_numa="0"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="2" src_numa="1" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="3">
+    <!-- Step 1, pair 2/3: rank3 sends chunks 0/2 to rank2 and aggregates chunks 1/3. -->
+    <instruction op="D2H" src_chunk="0" dst_chunk="12" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="14" dst_numa="1"/>
+
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="9" src_numa="1" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="internal" dst_chunk="1"/>
+
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="H2D" src_chunk="11" src_numa="1" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="internal" dst_chunk="3"/>
+
+    <!-- Step 2, pair 1/3: send chunk1 partial to rank1 and receive chunk3 partial from rank1. -->
+    <instruction op="D2H" src_buf="internal" src_chunk="1" dst_chunk="13" dst_numa="0"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="7" src_numa="1" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+  </rank>
+</ir_program>

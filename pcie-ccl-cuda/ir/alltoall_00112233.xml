@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="alltoall" nranks="8" topology="4numa_2gpu_per_numa" nnodes="1">
+  <description>
+    8-GPU AllToAll with 2x chunking: 4 NUMA nodes, 2 GPUs per NUMA.
+    Each per-rank segment is split into lo/hi halves (16 GPU chunks total).
+    GPU chunks 2k,2k+1 = lo/hi of rank k's segment.
+    D2H order: lo halves of all dests first, then hi halves, with per-rank
+    rotation (rank K starts at dest (K+1)%8) for balanced data availability.
+    Host chunk layout per NUMA: even rank hc0..13, odd rank hc14..27.
+  </description>
+
+  <!-- ===== NUMA 0: ranks 0, 1 ===== -->
+
+  <rank id="0">
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <instruction op="D2D" src_chunk="1" dst_chunk="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="2" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="4" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="6" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="8" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="10" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="12" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="3" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="5" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="7" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="9" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="11" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="13" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="15" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="15" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="15" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="13" src_numa="3"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="15" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2D" src_chunk="2" dst_chunk="2"/>
+    <instruction op="D2D" src_chunk="3" dst_chunk="3"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="16" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="18" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="20" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="22" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="24" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="26" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="14" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="17" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="19" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="21" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="23" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="25" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="27" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="15" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="16" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="17" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="16" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="17" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="13" src_numa="3"/>
+    <instruction op="H2D" src_chunk="16" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="17" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 1: ranks 2, 3 ===== -->
+
+  <rank id="2">
+    <instruction op="D2D" src_chunk="4" dst_chunk="4"/>
+    <instruction op="D2D" src_chunk="5" dst_chunk="5"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="4" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="6" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="8" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="10" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="12" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="5" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="7" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="9" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="11" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="13" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="1"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="16" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="17" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="18" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="19" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="18" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="19" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="13" src_numa="3"/>
+    <instruction op="H2D" src_chunk="18" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="19" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2D" src_chunk="6" dst_chunk="6"/>
+    <instruction op="D2D" src_chunk="7" dst_chunk="7"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="20" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="22" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="24" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="26" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="14" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="16" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="18" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="21" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="23" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="25" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="27" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="15" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="17" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="19" dst_numa="1"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="18" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="19" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="6" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="20" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="21" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="6" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="13" src_numa="3"/>
+    <instruction op="H2D" src_chunk="20" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="21" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 2: ranks 4, 5 ===== -->
+
+  <rank id="4">
+    <instruction op="D2D" src_chunk="8" dst_chunk="8"/>
+    <instruction op="D2D" src_chunk="9" dst_chunk="9"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="8" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="10" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="12" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="4" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="6" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="9" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="11" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="13" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="5" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="7" dst_numa="2"/>
+    <instruction op="H2D" src_chunk="6" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="20" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="21" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="6" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="20" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="21" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="22" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="23" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="8" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="9" dst_chunk="13" src_numa="3"/>
+    <instruction op="H2D" src_chunk="22" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="23" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <rank id="5">
+    <instruction op="D2D" src_chunk="10" dst_chunk="10"/>
+    <instruction op="D2D" src_chunk="11" dst_chunk="11"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="24" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="26" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="14" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="16" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="18" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="20" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="22" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="25" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="27" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="15" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="17" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="19" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="21" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="23" dst_numa="2"/>
+    <instruction op="H2D" src_chunk="8" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="9" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="22" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="23" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="8" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="9" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="22" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="23" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="8" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="9" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="13" src_numa="3"/>
+    <instruction op="H2D" src_chunk="24" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="25" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 3: ranks 6, 7 ===== -->
+
+  <rank id="6">
+    <instruction op="D2D" src_chunk="12" dst_chunk="12"/>
+    <instruction op="D2D" src_chunk="13" dst_chunk="13"/>
+    <instruction op="D2H" src_chunk="14" dst_chunk="12" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="4" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="6" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="8" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="10" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="15" dst_chunk="13" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="5" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="7" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="9" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="11" dst_numa="3"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="24" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="25" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="24" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="25" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="24" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="25" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="26" dst_chunk="14" src_numa="3"/>
+    <instruction op="H2D" src_chunk="27" dst_chunk="15" src_numa="3"/>
+  </rank>
+
+  <rank id="7">
+    <instruction op="D2D" src_chunk="14" dst_chunk="14"/>
+    <instruction op="D2D" src_chunk="15" dst_chunk="15"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="14" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="16" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="18" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="20" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="8" dst_chunk="22" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="10" dst_chunk="24" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="12" dst_chunk="26" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="15" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="17" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="19" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="21" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="9" dst_chunk="23" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="11" dst_chunk="25" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="13" dst_chunk="27" dst_numa="3"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="26" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="27" dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="26" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="27" dst_chunk="7" src_numa="1"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="8" src_numa="2"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="9" src_numa="2"/>
+    <instruction op="H2D" src_chunk="26" dst_chunk="10" src_numa="2"/>
+    <instruction op="H2D" src_chunk="27" dst_chunk="11" src_numa="2"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="12" src_numa="3"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="13" src_numa="3"/>
+  </rank>
+</ir_program>

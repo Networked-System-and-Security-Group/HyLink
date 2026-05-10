@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather" nranks="2" topology="1numa_2gpu_per_numa" variant="direct" nnodes="1">
+  <description>
+    2-GPU AllGather direct PCIe switch variant. Peer rank contribution is copied
+    directly from source input to destination output.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="1"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="1"/>
+  </rank>
+</ir_program>

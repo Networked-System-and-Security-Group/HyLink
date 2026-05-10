@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="reducescatter" nranks="2" topology="1numa_2gpu_per_numa" variant="direct" nnodes="1">
+  <description>
+    ReduceScatter with CUDA device-side D2DReduce. Source ranks move
+    each destination segment to the destination GPU or its local NUMA
+    host buffer; destination ranks accumulate locally with D2DReduce
+    (dst += src). No H2HReduce is used.
+  </description>
+
+  <rank id="0">
+
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="1">
+
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+</ir_program>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather" nranks="2" topology="2numa_1gpu_per_numa" nnodes="1">
+  <description>
+    2-GPU AllGather: 2 NUMA nodes, 1 GPU per NUMA.
+    Same algorithm as 1-NUMA variant (data goes through UPI anyway).
+    GPU0 on NUMA0, GPU1 on NUMA1.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="1"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+  </rank>
+</ir_program>

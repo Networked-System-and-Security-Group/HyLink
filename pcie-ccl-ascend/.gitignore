@@ -1,0 +1,31 @@
+# Build artifacts
+build*/
+results/
+nccl_tests*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+*.so
+/test_*
+/bench_*
+tests/hccl_test/bin/
+
+# Logs and profiling output
+*.log
+perf*/
+msprof_*/
+PROF_*/
+*.db
+
+# Local editor/cache
+.idea/
+.vscode/
+.cache/
+.claude/
+__pycache__/
+.DS_Store
+.agents/
+AGENTS.md
+# Internal docs
+docs/

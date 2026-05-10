@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allreduce" nranks="2" topology="1numa_2npu_per_numa" variant="relay_ring" nnodes="1">
+  <description>
+    2-NPU AllReduce host-relay ring. This non-direct IR does not use cross-rank
+    D2D. It performs a one-step ReduceScatter followed by a one-step AllGather
+    through NUMA0 host staging.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2H" src_buf="input" src_chunk="1" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="1" src_numa="0" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="internal" dst_chunk="0"/>
+
+    <instruction op="D2H" src_buf="internal" src_chunk="0" dst_chunk="2" dst_numa="0"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="3" src_numa="0" dst_buf="output" dst_chunk="1"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_buf="input" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2D" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="0" src_numa="0" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="internal" dst_chunk="1"/>
+
+    <instruction op="D2H" src_buf="internal" src_chunk="1" dst_chunk="3" dst_numa="0"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="2" src_numa="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+</ir_program>

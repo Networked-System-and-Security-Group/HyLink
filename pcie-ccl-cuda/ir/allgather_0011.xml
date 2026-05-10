@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather" nranks="4" topology="2numa_2gpu_per_numa" nnodes="1">
+  <description>
+    4-GPU AllGather: 2 NUMA nodes, 2 GPUs per NUMA.
+    Dual-placement approach: each rank uploads its chunk once to its local NUMA
+    host buffer and once to the peer NUMA host buffer. Every destination rank
+    then reads all needed chunks from its own local NUMA. This removes repeated
+    cross-NUMA H2D reads without using H2H bridge copies.
+
+    Host chunk layout on each NUMA:
+      hc0..hc3: one copy of each rank's contribution.
+    Cross-NUMA traffic: 4 D2H chunks, one remote placement per source rank.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <!-- H2D: all reads from local NUMA 0 -->
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="1"/>
+    <!-- H2D: all reads from local NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="2" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="2"/>
+    <!-- H2D: all reads from local NUMA 1 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="1"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="3" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="3" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="3"/>
+    <!-- H2D: all reads from local NUMA 1 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="1"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+  </rank>
+</ir_program>

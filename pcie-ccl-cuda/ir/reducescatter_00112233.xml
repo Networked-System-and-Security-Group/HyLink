@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="reducescatter" nranks="8" topology="4numa_2gpu_per_numa" nnodes="1">
+  <description>
+    ReduceScatter with CUDA device-side D2DReduce. Source ranks move
+    each destination segment to the destination GPU or its local NUMA
+    host buffer; destination ranks accumulate locally with D2DReduce
+    (dst += src). No H2HReduce is used.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="4" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="5" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="6" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="7" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="8" dst_buf="internal" dst_chunk="1" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="16" dst_buf="internal" dst_chunk="2" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="24" dst_buf="internal" dst_chunk="3" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="32" dst_buf="internal" dst_chunk="4" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="40" dst_buf="internal" dst_chunk="5" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="48" dst_buf="internal" dst_chunk="6" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="56" dst_buf="internal" dst_chunk="7" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="8" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="10" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="11" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="12" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="13" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="14" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="15" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="1" dst_buf="internal" dst_chunk="0" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="17" dst_buf="internal" dst_chunk="2" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="25" dst_buf="internal" dst_chunk="3" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="33" dst_buf="internal" dst_chunk="4" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="41" dst_buf="internal" dst_chunk="5" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="49" dst_buf="internal" dst_chunk="6" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="57" dst_buf="internal" dst_chunk="7" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="16" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="17" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="19" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="20" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="21" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="22" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="23" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="2" dst_buf="internal" dst_chunk="0" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="10" dst_buf="internal" dst_chunk="1" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="26" dst_buf="internal" dst_chunk="3" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="34" dst_buf="internal" dst_chunk="4" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="42" dst_buf="internal" dst_chunk="5" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="50" dst_buf="internal" dst_chunk="6" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="58" dst_buf="internal" dst_chunk="7" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="24" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="25" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="26" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="28" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="29" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="30" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="31" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="3" dst_buf="internal" dst_chunk="0" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="11" dst_buf="internal" dst_chunk="1" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="19" dst_buf="internal" dst_chunk="2" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="35" dst_buf="internal" dst_chunk="4" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="43" dst_buf="internal" dst_chunk="5" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="51" dst_buf="internal" dst_chunk="6" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="59" dst_buf="internal" dst_chunk="7" src_numa="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="4">
+    <instruction op="D2H" src_chunk="0" dst_chunk="32" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="33" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="34" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="35" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="37" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="38" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="39" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="4" src_buf="input" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="4" dst_buf="internal" dst_chunk="0" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="12" dst_buf="internal" dst_chunk="1" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="20" dst_buf="internal" dst_chunk="2" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="28" dst_buf="internal" dst_chunk="3" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="44" dst_buf="internal" dst_chunk="5" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="52" dst_buf="internal" dst_chunk="6" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="60" dst_buf="internal" dst_chunk="7" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="5">
+    <instruction op="D2H" src_chunk="0" dst_chunk="40" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="41" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="42" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="43" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="44" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="46" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="47" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="5" src_buf="input" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="5" dst_buf="internal" dst_chunk="0" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="13" dst_buf="internal" dst_chunk="1" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="21" dst_buf="internal" dst_chunk="2" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="29" dst_buf="internal" dst_chunk="3" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="37" dst_buf="internal" dst_chunk="4" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="53" dst_buf="internal" dst_chunk="6" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="61" dst_buf="internal" dst_chunk="7" src_numa="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="6">
+    <instruction op="D2H" src_chunk="0" dst_chunk="48" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="49" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="50" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="51" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="52" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="53" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="7" dst_chunk="55" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="6" src_buf="input" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="6" dst_buf="internal" dst_chunk="0" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="14" dst_buf="internal" dst_chunk="1" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="22" dst_buf="internal" dst_chunk="2" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="30" dst_buf="internal" dst_chunk="3" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="38" dst_buf="internal" dst_chunk="4" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="46" dst_buf="internal" dst_chunk="5" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="62" dst_buf="internal" dst_chunk="7" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="7">
+    <instruction op="D2H" src_chunk="0" dst_chunk="56" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="57" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="58" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="59" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="4" dst_chunk="60" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="5" dst_chunk="61" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="6" dst_chunk="62" dst_numa="3"/>
+
+    <instruction op="D2D" src_rank="7" src_buf="input" src_chunk="7" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="7" dst_buf="internal" dst_chunk="0" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="15" dst_buf="internal" dst_chunk="1" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="23" dst_buf="internal" dst_chunk="2" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="31" dst_buf="internal" dst_chunk="3" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="39" dst_buf="internal" dst_chunk="4" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="47" dst_buf="internal" dst_chunk="5" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="55" dst_buf="internal" dst_chunk="6" src_numa="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+</ir_program>

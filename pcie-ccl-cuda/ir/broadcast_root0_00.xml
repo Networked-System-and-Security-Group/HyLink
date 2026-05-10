@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="broadcast_root0" nranks="2" topology="00" variant="relay" nnodes="1">
+  <description>2-GPU Broadcast relay rooted at rank 0.</description>
+  <rank id="0">
+    <instruction op="D2H" src_buf="input" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+  <rank id="1">
+    <instruction op="H2D" src_chunk="0" src_numa="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+</ir_program>

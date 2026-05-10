@@ -1,0 +1,93 @@
+# Object files, ignored to avoid cross-platform differences
+*.o
+*.obj
+
+# Build directories, avoid CMake cache/generated files causing platform inconsistency
+build/
+out/
+.cursor/
+.claude/
+.codebuddy/
+.codex/
+.agents/
+.superpowers/
+.pytest_cache/
+# Test applications: param 扫描产物（集合通信名可变，如 allgather / allreduce）
+**/hccl_*_param
+**/nccl_*_param
+*.nsys-rep
+tests/nccl_test/allgather/batch_results.txt
+tests/nccl_test/allgather/logs
+tests/nccl_test/allgather/figure
+tests/nccl_test/allgather/nccl_allgather_with_pcie
+tests/pcie_test/mem_test/mem_test_nccl
+tests/pcie_test/mem_test/mem_test_hccl
+tests/hccl_test/allgather/prof
+**/test_log/
+tests/hccl_test/test_scripts/logs
+tests/hccl_test/inference_experiment/results
+**/__pycache__
+
+
+# CMake generated (can also ignore if building outside project root)
+# CMakeCache.txt
+# CMakeFiles/
+# cmake_install.cmake
+# Makefile
+# *.cmake
+# !CMakeLists.txt
+
+# Build artifacts (optional, keep as needed)
+*.so
+*.so.*
+*.a
+*.dylib
+*.dll
+*.lib
+*.exe
+*.out
+*.bin
+
+# Locally built test executables (intentionally extensionless)
+tests/HCCL_TEST/all_gather_test
+tests/HCCL_TEST/all_reduce_test
+tests/HCCL_TEST/alltoall_test
+tests/HCCL_TEST/reduce_scatter_test
+tests/hccl_test/allgather/hccl_allgather_with_pcie
+tests/hccl_test/allreduce_debug/pcie_copy_loop
+tests/hccl_test/mpi_primitives/hccl_mpi_primitives
+tests/nccl_test/allgather/nccl_allgather_with_pcie
+tests/nccl_test/mpi_primitives/nccl_mpi_primitives
+tests/nccl_test/unit_test/nccl_commsplit_allgather_mpi
+tests/pcie_test/mem_test/d2d_test_nccl
+tests/pcie_test/mem_test/d2h_paced_test
+tests/pcie_test/mem_test/d2h_test_orig
+tests/pcie_test/mem_test/pccl_allgather_bg
+tests/unit/test_stream_wait_event
+tests/unit/test_value_wait_event
+tests/unit/test_reduce_d2d_interference
+tests/unit/test_reduce_hccl_interference
+# Logs and runtime diagnostics
+*.log
+*.log.*
+log/
+logs/
+
+# Generated build and experiment artifacts
+tests/unit/.pccl_aicore_reduce_build/
+tests/unit/test_value_wait_ring
+tests/hccl_test/mpi_primitives/mpi_dma_benchmark
+tests/hccl_test/inference_experiment/bin
+tests/nccl_test/allgather/prof.sqlite
+tests/nccl_test/test_scripts/csv/
+tests/nccl_test/test_scripts/csv_mpi/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+
+# Editor/System
+.DS_Store
+*.swp
+*~

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather_direct" nranks="8" topology="4numa_2gpu_per_numa" nnodes="1">
+  <description>
+    8-GPU AllGather: 4 NUMA nodes, 2 GPUs per NUMA (fully-connected sockets).
+    2-stage direct approach: D2H then H2D directly from source NUMA (no H2H).
+
+    Stage 1 (D2H): each rank copies its chunk to its local NUMA host buffer.
+      Rank R → hc(R) on NUMA floor(R/2)
+
+    Stage 2 (H2D): each rank reads all 7 remote chunks directly from
+      whichever NUMA they were D2H'd to. Cross-NUMA H2D reads are used
+      instead of H2H bridge copies.
+
+    No extra host chunks needed (only hc0..hc7, 2 per NUMA).
+    Cross-NUMA H2D traffic: each GPU reads 6 remote chunks from 3 NUMAs.
+  </description>
+
+  <!-- ===== NUMA 0: ranks 0, 1 ===== -->
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: remote from NUMA 1 -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: remote from NUMA 2 -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: remote from NUMA 3 -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="1"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <!-- H2D: remote from NUMA 1 -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: remote from NUMA 2 -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: remote from NUMA 3 -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 1: ranks 2, 3 ===== -->
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="2"/>
+    <!-- H2D: remote from NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: remote from NUMA 2 -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: remote from NUMA 3 -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="3" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="3"/>
+    <!-- H2D: remote from NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <!-- H2D: remote from NUMA 2 -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: remote from NUMA 3 -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 2: ranks 4, 5 ===== -->
+
+  <rank id="4">
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="2"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="4"/>
+    <!-- H2D: remote from NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: remote from NUMA 1 -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: remote from NUMA 3 -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <rank id="5">
+    <instruction op="D2H" src_chunk="0" dst_chunk="5" dst_numa="2"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="5"/>
+    <!-- H2D: remote from NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: remote from NUMA 1 -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <!-- H2D: remote from NUMA 3 -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 3: ranks 6, 7 ===== -->
+
+  <rank id="6">
+    <instruction op="D2H" src_chunk="0" dst_chunk="6" dst_numa="3"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="6"/>
+    <!-- H2D: remote from NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: remote from NUMA 1 -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: remote from NUMA 2 -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="7" dst_chunk="7" src_numa="3"/>
+  </rank>
+
+  <rank id="7">
+    <instruction op="D2H" src_chunk="0" dst_chunk="7" dst_numa="3"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="7"/>
+    <!-- H2D: remote from NUMA 0 -->
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <!-- H2D: remote from NUMA 1 -->
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="1"/>
+    <!-- H2D: remote from NUMA 2 -->
+    <instruction op="H2D" src_chunk="4" dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="5" dst_chunk="5" src_numa="2"/>
+    <!-- H2D: local -->
+    <instruction op="H2D" src_chunk="6" dst_chunk="6" src_numa="3"/>
+  </rank>
+</ir_program>

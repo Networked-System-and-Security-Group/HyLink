@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather" nranks="8" topology="4numa_2gpu_per_numa" nnodes="1">
+  <description>
+    8-GPU AllGather: 4 NUMA nodes, 2 GPUs per NUMA (fully-connected sockets).
+    Optimization: each NUMA's bridge rank (even rank) pulls all remote chunks
+    to local NUMA first, then all H2D reads are local. Non-bridge rank waits
+    for bridge's H2H copies then reads everything locally.
+
+    Host chunk layout per NUMA N (ranks 2N, 2N+1):
+      hc(2N), hc(2N+1) : own data (global slot = rank id)
+      hc8..hc13        : NUMA-local cache of 6 remote chunks
+
+    Bridge rank H2H copies (cross-NUMA traffic):
+      Rank 0 (N0): pulls hc2,hc3 from N1, hc4,hc5 from N2, hc6,hc7 from N3 → N0:hc8..hc13
+      Rank 2 (N1): pulls hc0,hc1 from N0, hc4,hc5 from N2, hc6,hc7 from N3 → N1:hc8..hc13
+      Rank 4 (N2): pulls hc0,hc1 from N0, hc2,hc3 from N1, hc6,hc7 from N3 → N2:hc8..hc13
+      Rank 6 (N3): pulls hc0,hc1 from N0, hc2,hc3 from N1, hc4,hc5 from N2 → N3:hc8..hc13
+
+    Cross-NUMA: 24 chunks (optimal: 8 chunks × 3 remote NUMAs).
+    Each inter-socket link carries exactly 4 chunks bidirectionally (balanced).
+  </description>
+
+  <!-- ===== NUMA 0: ranks 0, 1 ===== -->
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <!-- Pull all remote chunks to local N0 -->
+    <instruction op="H2H" src_chunk="2" dst_chunk="8"  src_numa="1" dst_numa="0"/>
+    <instruction op="H2H" src_chunk="3" dst_chunk="9"  src_numa="1" dst_numa="0"/>
+    <instruction op="H2H" src_chunk="4" dst_chunk="10" src_numa="2" dst_numa="0"/>
+    <instruction op="H2H" src_chunk="5" dst_chunk="11" src_numa="2" dst_numa="0"/>
+    <instruction op="H2H" src_chunk="6" dst_chunk="12" src_numa="3" dst_numa="0"/>
+    <instruction op="H2H" src_chunk="7" dst_chunk="13" src_numa="3" dst_numa="0"/>
+    <!-- All H2D from local N0 -->
+    <instruction op="H2D" src_chunk="1"  dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="4" src_numa="0"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="5" src_numa="0"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="6" src_numa="0"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="7" src_numa="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="1"/>
+    <!-- All H2D from local N0 (hc8..hc13 filled by rank 0's H2H copies) -->
+    <instruction op="H2D" src_chunk="0"  dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="3" src_numa="0"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="4" src_numa="0"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="5" src_numa="0"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="6" src_numa="0"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="7" src_numa="0"/>
+  </rank>
+
+  <!-- ===== NUMA 1: ranks 2, 3 ===== -->
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="2"/>
+    <!-- Pull all remote chunks to local N1 -->
+    <instruction op="H2H" src_chunk="0" dst_chunk="8"  src_numa="0" dst_numa="1"/>
+    <instruction op="H2H" src_chunk="1" dst_chunk="9"  src_numa="0" dst_numa="1"/>
+    <instruction op="H2H" src_chunk="4" dst_chunk="10" src_numa="2" dst_numa="1"/>
+    <instruction op="H2H" src_chunk="5" dst_chunk="11" src_numa="2" dst_numa="1"/>
+    <instruction op="H2H" src_chunk="6" dst_chunk="12" src_numa="3" dst_numa="1"/>
+    <instruction op="H2H" src_chunk="7" dst_chunk="13" src_numa="3" dst_numa="1"/>
+    <!-- All H2D from local N1 -->
+    <instruction op="H2D" src_chunk="3"  dst_chunk="3" src_numa="1"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="0" src_numa="1"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="7" src_numa="1"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="3" dst_numa="1"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="3"/>
+    <!-- All H2D from local N1 (hc8..hc13 filled by rank 2's H2H copies) -->
+    <instruction op="H2D" src_chunk="2"  dst_chunk="2" src_numa="1"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="0" src_numa="1"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="4" src_numa="1"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="5" src_numa="1"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="6" src_numa="1"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="7" src_numa="1"/>
+  </rank>
+
+  <!-- ===== NUMA 2: ranks 4, 5 ===== -->
+
+  <rank id="4">
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="2"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="4"/>
+    <!-- Pull all remote chunks to local N2 -->
+    <instruction op="H2H" src_chunk="0" dst_chunk="8"  src_numa="0" dst_numa="2"/>
+    <instruction op="H2H" src_chunk="1" dst_chunk="9"  src_numa="0" dst_numa="2"/>
+    <instruction op="H2H" src_chunk="2" dst_chunk="10" src_numa="1" dst_numa="2"/>
+    <instruction op="H2H" src_chunk="3" dst_chunk="11" src_numa="1" dst_numa="2"/>
+    <instruction op="H2H" src_chunk="6" dst_chunk="12" src_numa="3" dst_numa="2"/>
+    <instruction op="H2H" src_chunk="7" dst_chunk="13" src_numa="3" dst_numa="2"/>
+    <!-- All H2D from local N2 -->
+    <instruction op="H2D" src_chunk="5"  dst_chunk="5" src_numa="2"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="0" src_numa="2"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="1" src_numa="2"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="3" src_numa="2"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="6" src_numa="2"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="7" src_numa="2"/>
+  </rank>
+
+  <rank id="5">
+    <instruction op="D2H" src_chunk="0" dst_chunk="5" dst_numa="2"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="5"/>
+    <!-- All H2D from local N2 (hc8..hc13 filled by rank 4's H2H copies) -->
+    <instruction op="H2D" src_chunk="4"  dst_chunk="4" src_numa="2"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="0" src_numa="2"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="1" src_numa="2"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="3" src_numa="2"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="6" src_numa="2"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="7" src_numa="2"/>
+  </rank>
+
+  <!-- ===== NUMA 3: ranks 6, 7 ===== -->
+
+  <rank id="6">
+    <instruction op="D2H" src_chunk="0" dst_chunk="6" dst_numa="3"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="6"/>
+    <!-- Pull all remote chunks to local N3 -->
+    <instruction op="H2H" src_chunk="0" dst_chunk="8"  src_numa="0" dst_numa="3"/>
+    <instruction op="H2H" src_chunk="1" dst_chunk="9"  src_numa="0" dst_numa="3"/>
+    <instruction op="H2H" src_chunk="2" dst_chunk="10" src_numa="1" dst_numa="3"/>
+    <instruction op="H2H" src_chunk="3" dst_chunk="11" src_numa="1" dst_numa="3"/>
+    <instruction op="H2H" src_chunk="4" dst_chunk="12" src_numa="2" dst_numa="3"/>
+    <instruction op="H2H" src_chunk="5" dst_chunk="13" src_numa="2" dst_numa="3"/>
+    <!-- All H2D from local N3 -->
+    <instruction op="H2D" src_chunk="7"  dst_chunk="7" src_numa="3"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="0" src_numa="3"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="1" src_numa="3"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="2" src_numa="3"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="3" src_numa="3"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="4" src_numa="3"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="5" src_numa="3"/>
+  </rank>
+
+  <rank id="7">
+    <instruction op="D2H" src_chunk="0" dst_chunk="7" dst_numa="3"/>
+    <instruction op="D2D" src_chunk="0" dst_chunk="7"/>
+    <!-- All H2D from local N3 (hc8..hc13 filled by rank 6's H2H copies) -->
+    <instruction op="H2D" src_chunk="6"  dst_chunk="6" src_numa="3"/>
+    <instruction op="H2D" src_chunk="8"  dst_chunk="0" src_numa="3"/>
+    <instruction op="H2D" src_chunk="9"  dst_chunk="1" src_numa="3"/>
+    <instruction op="H2D" src_chunk="10" dst_chunk="2" src_numa="3"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="3" src_numa="3"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="4" src_numa="3"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="5" src_numa="3"/>
+  </rank>
+</ir_program>

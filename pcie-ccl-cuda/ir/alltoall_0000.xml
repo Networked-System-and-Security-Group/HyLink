@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="alltoall" nranks="4" topology="1numa_4gpu_per_numa" nnodes="1">
+  <description>
+    4-GPU AllToAll: 1 NUMA node, 4 GPUs.
+    Each rank sends chunk[j] to rank j, receives from rank j into chunk[j].
+    Self-send via D2D, cross-rank via D2H/H2D through host.
+    Host chunk for transfer r→j = r*4+j.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2D" src_chunk="0" dst_chunk="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="4" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="8" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="12" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2D" src_chunk="1" dst_chunk="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="6" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="7" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="9" dst_chunk="2" src_numa="0"/>
+    <instruction op="H2D" src_chunk="13" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="2">
+    <instruction op="D2D" src_chunk="2" dst_chunk="2"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="11" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="8" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="9" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="6" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2D" src_chunk="3" dst_chunk="3"/>
+    <instruction op="D2H" src_chunk="0" dst_chunk="12" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="13" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="14" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="7" dst_chunk="1" src_numa="0"/>
+    <instruction op="H2D" src_chunk="11" dst_chunk="2" src_numa="0"/>
+  </rank>
+</ir_program>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allreduce" nranks="8" topology="4numa_2gpu_per_numa" nnodes="1">
+  <description>
+    8-GPU AllReduce: 4 NUMA nodes, 2 GPUs per NUMA.
+    Multi-root tree reduce-scatter + direct remote H2D:
+      Data split into 4 segments; NUMA K is root for segment K.
+      Phase 1: Intra-NUMA pairwise reduce per segment.
+               H2HReduce(hc[K], hc[4+K]) → hc[8+K] on each NUMA.
+      Phase 2: Cross-NUMA binary tree reduce (2 levels).
+               Stage A: Pairwise reduce of 2 NUMAs → intermediate chunk.
+               Stage B: Root reduces two Stage A results → final chunk.
+      H2D: reads directly from root NUMA's hc14 for each segment.
+    Host chunk layout per NUMA:
+      hc0-3: even rank D2H (4 segs), hc4-7: odd rank D2H (4 segs),
+      hc8-11: Phase 1 output (4 segs),
+      hc12: Stage A intermediate (seg 0/1), hc13: Stage A intermediate (seg 2/3),
+      hc14: Stage B final result.
+    Tree pairings:
+      Seg 0 (root=N0): A: (N0,N1)→N0:hc12, (N2,N3)→N2:hc12. B: N0:H2HReduce(hc12,N2:hc12)→hc14
+      Seg 1 (root=N1): A: (N1,N0)→N1:hc12, (N3,N2)→N3:hc12. B: N1:H2HReduce(hc12,N3:hc12)→hc14
+      Seg 2 (root=N2): A: (N2,N3)→N2:hc13, (N0,N1)→N0:hc13. B: N2:H2HReduce(hc13,N0:hc13)→hc14
+      Seg 3 (root=N3): A: (N3,N2)→N3:hc13, (N1,N0)→N1:hc13. B: N3:H2HReduce(hc13,N1:hc13)→hc14
+  </description>
+
+  <!-- ===== NUMA 0: ranks 0, 1 — root for segment 0 ===== -->
+
+  <rank id="0">
+    <!-- D2H: 4 segments -->
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="0"/>
+    <!-- Phase 1: intra-NUMA reduce (4 segments) -->
+    <instruction op="H2HReduce" src1_chunk="0" src1_numa="0" src2_chunk="4" src2_numa="0" dst_chunk="8"  dst_numa="0"/>
+    <instruction op="H2HReduce" src1_chunk="1" src1_numa="0" src2_chunk="5" src2_numa="0" dst_chunk="9"  dst_numa="0"/>
+    <instruction op="H2HReduce" src1_chunk="2" src1_numa="0" src2_chunk="6" src2_numa="0" dst_chunk="10" dst_numa="0"/>
+    <instruction op="H2HReduce" src1_chunk="3" src1_numa="0" src2_chunk="7" src2_numa="0" dst_chunk="11" dst_numa="0"/>
+    <!-- Phase 2 Seg 0: tree reduce (root=N0) -->
+    <!-- Stage A: N0 reduces (N0:hc8, N1:hc8) → N0:hc12 -->
+    <instruction op="H2HReduce" src1_chunk="8" src1_numa="0" src2_chunk="8" src2_numa="1" dst_chunk="12" dst_numa="0"/>
+    <!-- Stage B: N0 reduces (N0:hc12, N2:hc12) → N0:hc14 -->
+    <instruction op="H2HReduce" src1_chunk="12" src1_numa="0" src2_chunk="12" src2_numa="2" dst_chunk="14" dst_numa="0"/>
+    <!-- Phase 2 Seg 2: N0 is helper for root=N2 -->
+    <!-- Stage A: N0 reduces (N0:hc10, N1:hc10) → N0:hc13 -->
+    <instruction op="H2HReduce" src1_chunk="10" src1_numa="0" src2_chunk="10" src2_numa="1" dst_chunk="13" dst_numa="0"/>
+    <!-- H2D: seg 0 from N0:hc14, segs 1-3 from respective root NUMAs -->
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="5" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="6" dst_numa="0"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="7" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 1: ranks 2, 3 — root for segment 1 ===== -->
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="1"/>
+    <!-- Phase 1: intra-NUMA reduce -->
+    <instruction op="H2HReduce" src1_chunk="0" src1_numa="1" src2_chunk="4" src2_numa="1" dst_chunk="8"  dst_numa="1"/>
+    <instruction op="H2HReduce" src1_chunk="1" src1_numa="1" src2_chunk="5" src2_numa="1" dst_chunk="9"  dst_numa="1"/>
+    <instruction op="H2HReduce" src1_chunk="2" src1_numa="1" src2_chunk="6" src2_numa="1" dst_chunk="10" dst_numa="1"/>
+    <instruction op="H2HReduce" src1_chunk="3" src1_numa="1" src2_chunk="7" src2_numa="1" dst_chunk="11" dst_numa="1"/>
+    <!-- Phase 2 Seg 1: tree reduce (root=N1) -->
+    <!-- Stage A: N1 reduces (N1:hc9, N0:hc9) → N1:hc12 -->
+    <instruction op="H2HReduce" src1_chunk="9" src1_numa="1" src2_chunk="9" src2_numa="0" dst_chunk="12" dst_numa="1"/>
+    <!-- Stage B: N1 reduces (N1:hc12, N3:hc12) → N1:hc14 -->
+    <instruction op="H2HReduce" src1_chunk="12" src1_numa="1" src2_chunk="12" src2_numa="3" dst_chunk="14" dst_numa="1"/>
+    <!-- Phase 2 Seg 3: N1 is helper for root=N3 -->
+    <!-- Stage A: N1 reduces (N1:hc11, N0:hc11) → N1:hc13 -->
+    <instruction op="H2HReduce" src1_chunk="11" src1_numa="1" src2_chunk="11" src2_numa="0" dst_chunk="13" dst_numa="1"/>
+    <!-- H2D -->
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="5" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="6" dst_numa="1"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="7" dst_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 2: ranks 4, 5 — root for segment 2 ===== -->
+
+  <rank id="4">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="2"/>
+    <!-- Phase 1: intra-NUMA reduce -->
+    <instruction op="H2HReduce" src1_chunk="0" src1_numa="2" src2_chunk="4" src2_numa="2" dst_chunk="8"  dst_numa="2"/>
+    <instruction op="H2HReduce" src1_chunk="1" src1_numa="2" src2_chunk="5" src2_numa="2" dst_chunk="9"  dst_numa="2"/>
+    <instruction op="H2HReduce" src1_chunk="2" src1_numa="2" src2_chunk="6" src2_numa="2" dst_chunk="10" dst_numa="2"/>
+    <instruction op="H2HReduce" src1_chunk="3" src1_numa="2" src2_chunk="7" src2_numa="2" dst_chunk="11" dst_numa="2"/>
+    <!-- Phase 2 Seg 2: tree reduce (root=N2) -->
+    <!-- Stage A: N2 reduces (N2:hc10, N3:hc10) → N2:hc13 -->
+    <instruction op="H2HReduce" src1_chunk="10" src1_numa="2" src2_chunk="10" src2_numa="3" dst_chunk="13" dst_numa="2"/>
+    <!-- Stage B: N2 reduces (N2:hc13, N0:hc13) → N2:hc14 -->
+    <instruction op="H2HReduce" src1_chunk="13" src1_numa="2" src2_chunk="13" src2_numa="0" dst_chunk="14" dst_numa="2"/>
+    <!-- Phase 2 Seg 0: N2 is helper for root=N0 -->
+    <!-- Stage A: N2 reduces (N2:hc8, N3:hc8) → N2:hc12 -->
+    <instruction op="H2HReduce" src1_chunk="8" src1_numa="2" src2_chunk="8" src2_numa="3" dst_chunk="12" dst_numa="2"/>
+    <!-- H2D -->
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <rank id="5">
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="5" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="6" dst_numa="2"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="7" dst_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <!-- ===== NUMA 3: ranks 6, 7 — root for segment 3 ===== -->
+
+  <rank id="6">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="1" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="2" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="3" dst_numa="3"/>
+    <!-- Phase 1: intra-NUMA reduce -->
+    <instruction op="H2HReduce" src1_chunk="0" src1_numa="3" src2_chunk="4" src2_numa="3" dst_chunk="8"  dst_numa="3"/>
+    <instruction op="H2HReduce" src1_chunk="1" src1_numa="3" src2_chunk="5" src2_numa="3" dst_chunk="9"  dst_numa="3"/>
+    <instruction op="H2HReduce" src1_chunk="2" src1_numa="3" src2_chunk="6" src2_numa="3" dst_chunk="10" dst_numa="3"/>
+    <instruction op="H2HReduce" src1_chunk="3" src1_numa="3" src2_chunk="7" src2_numa="3" dst_chunk="11" dst_numa="3"/>
+    <!-- Phase 2 Seg 3: tree reduce (root=N3) -->
+    <!-- Stage A: N3 reduces (N3:hc11, N2:hc11) → N3:hc13 -->
+    <instruction op="H2HReduce" src1_chunk="11" src1_numa="3" src2_chunk="11" src2_numa="2" dst_chunk="13" dst_numa="3"/>
+    <!-- Stage B: N3 reduces (N3:hc13, N1:hc13) → N3:hc14 -->
+    <instruction op="H2HReduce" src1_chunk="13" src1_numa="3" src2_chunk="13" src2_numa="1" dst_chunk="14" dst_numa="3"/>
+    <!-- Phase 2 Seg 1: N3 is helper for root=N1 -->
+    <!-- Stage A: N3 reduces (N3:hc9, N2:hc9) → N3:hc12 -->
+    <instruction op="H2HReduce" src1_chunk="9" src1_numa="3" src2_chunk="9" src2_numa="2" dst_chunk="12" dst_numa="3"/>
+    <!-- H2D -->
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+
+  <rank id="7">
+    <instruction op="D2H" src_chunk="0" dst_chunk="4" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="1" dst_chunk="5" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="2" dst_chunk="6" dst_numa="3"/>
+    <instruction op="D2H" src_chunk="3" dst_chunk="7" dst_numa="3"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="0" src_numa="0"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="1" src_numa="1"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="2" src_numa="2"/>
+    <instruction op="H2D" src_chunk="14" dst_chunk="3" src_numa="3"/>
+  </rank>
+</ir_program>

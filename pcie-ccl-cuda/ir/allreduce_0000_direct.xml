@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allreduce" nranks="4" topology="1numa_4gpu_per_numa" variant="direct" nnodes="1">
+  <description>
+    4-GPU AllReduce direct variant for two PIX pairs (0/1 and 2/3).
+    Each PIX pair first builds pair-local partial sums with D2DReduce.
+    Pair representatives exchange partials for the opposite pair through host
+    memory, then each rank gathers final chunks using local H2D plus PIX D2D
+    fanout. This IR requires cross-rank device D2D/IPC inside each PIX pair.
+  </description>
+
+  <rank id="0">
+    <!-- Pair 0/1 partial for chunk 2, sent to pair 2/3. -->
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="5" dst_chunk="2" dst_numa="0"/>
+
+    <!-- Final chunk 0 on rank 0. -->
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="H2D" src_chunk="8" src_numa="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+
+    <!-- Publish and gather final chunks. -->
+    <instruction op="D2H" src_buf="internal" src_chunk="4" dst_chunk="16" dst_numa="0"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="18" src_numa="0" dst_buf="output" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="1" src_buf="output" src_chunk="3" dst_buf="output" dst_chunk="3"/>
+  </rank>
+
+  <rank id="1">
+    <!-- Pair 0/1 partial for chunk 3, sent to pair 2/3. -->
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="5" dst_chunk="3" dst_numa="0"/>
+
+    <!-- Final chunk 1 on rank 1. -->
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="H2D" src_chunk="9" src_numa="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+
+    <instruction op="D2H" src_buf="internal" src_chunk="4" dst_chunk="17" dst_numa="0"/>
+    <instruction op="D2D" src_rank="0" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="1"/>
+    <instruction op="D2D" src_rank="0" src_buf="output" src_chunk="2" dst_buf="output" dst_chunk="2"/>
+    <instruction op="H2D" src_chunk="19" src_numa="0" dst_buf="output" dst_chunk="3"/>
+  </rank>
+
+  <rank id="2">
+    <!-- Pair 2/3 partial for chunk 0, sent to pair 0/1. -->
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="5" dst_chunk="8" dst_numa="0"/>
+
+    <!-- Final chunk 2 on rank 2. -->
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="H2D" src_chunk="2" src_numa="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+
+    <instruction op="D2H" src_buf="internal" src_chunk="4" dst_chunk="18" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="16" src_numa="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="3" src_buf="output" src_chunk="1" dst_buf="output" dst_chunk="1"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="3" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="3"/>
+  </rank>
+
+  <rank id="3">
+    <!-- Pair 2/3 partial for chunk 1, sent to pair 0/1. -->
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="5" dst_chunk="9" dst_numa="0"/>
+
+    <!-- Final chunk 3 on rank 3. -->
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="H2D" src_chunk="3" src_numa="0" dst_buf="internal" dst_chunk="6"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="6" dst_buf="internal" dst_chunk="4"/>
+
+    <instruction op="D2H" src_buf="internal" src_chunk="4" dst_chunk="19" dst_numa="0"/>
+    <instruction op="D2D" src_rank="2" src_buf="output" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="17" src_numa="0" dst_buf="output" dst_chunk="1"/>
+    <instruction op="D2D" src_rank="2" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="2"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="3"/>
+  </rank>
+</ir_program>

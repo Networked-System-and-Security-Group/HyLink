@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allreduce" nranks="2" topology="1numa_2gpu_per_numa" variant="direct" nnodes="1">
+  <description>
+    2-GPU AllReduce direct variant for a PIX pair. Each rank reduces both
+    output chunks locally using peer D2D input copies and D2DReduce.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="1"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="5"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="5" dst_buf="internal" dst_chunk="4"/>
+    <instruction op="D2D" src_buf="internal" src_chunk="4" dst_buf="output" dst_chunk="1"/>
+  </rank>
+</ir_program>

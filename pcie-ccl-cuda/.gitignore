@@ -1,0 +1,18 @@
+# Build
+build*/
+results/
+perf*/
+nccl_tests*/
+
+# IDE
+.idea/
+.vscode/
+.cache/
+.claude/
+
+# OS
+.DS_Store
+__pycache__/
+
+# Internal docs
+docs/

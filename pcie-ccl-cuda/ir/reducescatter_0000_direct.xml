@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="reducescatter" nranks="4" topology="1numa_4gpu_per_numa" variant="direct" nnodes="1">
+  <description>
+    4-GPU ReduceScatter with CUDA device-side pair partial reductions.
+    Each PIX pair first reduces its two contributions on the pair-local
+    destination GPU, transfers one partial for the opposite pair through host,
+    then accumulates the remote partial with D2DReduce (dst += src).
+  </description>
+
+  <rank id="0">
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="2" dst_chunk="2" dst_numa="0"/>
+
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="8" dst_buf="internal" dst_chunk="2" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="3" dst_chunk="3" dst_numa="0"/>
+
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="1" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="9" dst_buf="internal" dst_chunk="2" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="2">
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="0" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="internal" dst_chunk="0"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="0" dst_chunk="8" dst_numa="0"/>
+
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="2" dst_buf="internal" dst_chunk="3"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="2" dst_buf="internal" dst_chunk="0" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="1" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="internal" dst_chunk="1"/>
+    <instruction op="D2H" src_buf="internal" src_chunk="1" dst_chunk="9" dst_numa="0"/>
+
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="3" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="3" dst_buf="internal" dst_chunk="2"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="2" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="3" dst_buf="internal" dst_chunk="0" src_numa="0"/>
+    <instruction op="D2DReduce" src_buf="internal" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+  </rank>
+</ir_program>

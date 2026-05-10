@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ir_program name="allgather" nranks="4" topology="1numa_4gpu_per_numa" variant="direct" nnodes="1">
+  <description>
+    4-GPU AllGather hierarchical PCIe-switch direct variant.
+    Peer pairs 0-1 and 2-3 exchange their local chunks with D2D. For the
+    opposite peer pair, each rank pulls one chunk from host and then fans it out
+    to its PIX peer via D2D. This halves cross-pair H2D fanout versus having
+    both ranks pull both remote chunks from host.
+  </description>
+
+  <rank id="0">
+    <instruction op="D2H" src_chunk="0" dst_chunk="0" dst_numa="0"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="1"/>
+    <instruction op="H2D" src_chunk="2" dst_chunk="2" src_numa="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="output" src_chunk="3" dst_buf="output" dst_chunk="3"/>
+  </rank>
+
+  <rank id="1">
+    <instruction op="D2H" src_chunk="0" dst_chunk="1" dst_numa="0"/>
+    <instruction op="D2D" src_rank="0" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="D2D" src_rank="1" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="1"/>
+    <instruction op="D2D" src_rank="0" src_buf="output" src_chunk="2" dst_buf="output" dst_chunk="2"/>
+    <instruction op="H2D" src_chunk="3" dst_chunk="3" src_numa="0"/>
+  </rank>
+
+  <rank id="2">
+    <instruction op="D2H" src_chunk="0" dst_chunk="2" dst_numa="0"/>
+    <instruction op="H2D" src_chunk="0" dst_chunk="0" src_numa="0"/>
+    <instruction op="D2D" src_rank="3" src_buf="output" src_chunk="1" dst_buf="output" dst_chunk="1"/>
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="3"/>
+  </rank>
+
+  <rank id="3">
+    <instruction op="D2H" src_chunk="0" dst_chunk="3" dst_numa="0"/>
+    <instruction op="D2D" src_rank="2" src_buf="output" src_chunk="0" dst_buf="output" dst_chunk="0"/>
+    <instruction op="H2D" src_chunk="1" dst_chunk="1" src_numa="0"/>
+    <instruction op="D2D" src_rank="2" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="2"/>
+    <instruction op="D2D" src_rank="3" src_buf="input" src_chunk="0" dst_buf="output" dst_chunk="3"/>
+  </rank>
+</ir_program>
