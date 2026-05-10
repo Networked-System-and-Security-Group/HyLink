@@ -1,0 +1,28 @@
+# IDE and tools
+*.pdf
+.claude
+.cache
+.vscode
+.idea
+compile_commands.json
+.clangd
+format.sh
+CLAUDE.md
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.out
+build/
+
+# Kernel build artifacts
+kernels/lib/
+kernels/build/
+kernels/test_wait_kernel
+
+# Test binaries
+tests/test_allgather
+tests/test_host_memcpy
+tests/test_memcpy
+tests/test_allgather_between_numa

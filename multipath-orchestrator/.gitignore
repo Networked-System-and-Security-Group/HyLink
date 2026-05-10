@@ -1,0 +1,37 @@
+# Object files, ignored to avoid cross-platform differences
+*.o
+*.obj
+
+# Build directories, avoid CMake cache/generated files causing platform inconsistency
+build/
+out/
+
+# Test applications
+tests/hccl_test/allgather/hccl_allgather_param
+test/hccl_test/allreduce/hccl_allreduce_param
+*.nsys-rep
+tests/nccl_test/allgather/batch_results.txt
+tests/nccl_test/allgather/logs
+tests/nccl_test/allgather/figure
+tests/nccl_test/allgather/nccl_allgather_param
+tests/nccl_test/allgather/nccl_allgather_with_pcie
+tests/pcie_test/mem_test/mem_test_nccl
+tests/pcie_test/mem_test/mem_test_hccl
+
+# CMake generated (can also ignore if building outside project root)
+# CMakeCache.txt
+# CMakeFiles/
+# cmake_install.cmake
+# Makefile
+# *.cmake
+# !CMakeLists.txt
+
+# Build artifacts (optional, keep as needed)
+*.so
+*.a
+*.dylib
+
+# Editor/System
+.DS_Store
+*.swp
+*~
